@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>単語帳</title>
+    <link rel="stylesheet" href="./css/notepad.css" />
+  </head>
+  <body>
+    <div class="notepad-container">
+      <div class="title">
+        <h1>単語帳</h1>
+      </div>
+      <div class="notepad-card">
+        <div class="front">
+          <h2 id="word-display">Word</h2>
+        </div>
+        <div class="back">
+          <p>
+            <span id="type-display">Type</span><br />
+            <span id="meaning-display">Meaning</span><br />
+            <span id="phrase-display">Phrase</span>
+          </p>
+        </div>
+      </div>
+
+      <button id="flip-btn" class="flip-button">ページをめくる</button>
+      <div id="navigation">
+        <button id="prev-btn" class="arrow-btn">
+            <span class="arrow left-arrow"></span> 前の単語
+          </button>
+          <button id="next-btn" class="arrow-btn">
+            次の単語 <span class="arrow right-arrow"></span>
+          </button>
+      </div>
+      <button id="reverse-btn" class="rvs-button">リバース</button>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        set,
+        onChildAdded,
+        remove,
+        onChildRemoved,
+      } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+
+      // Firebase設定
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app); //RealtimeDBに接続
+      const dbRef = ref(db, "vocabulary"); //RealtimeDB内の"vocabulary"を使う
+
+      // HTML要素の取得
+      const prevBtn = document.getElementById("prev-btn");
+      const nextBtn = document.getElementById("next-btn");
+      const flipBtn = document.getElementById("flip-btn");
+      const card = document.querySelector(".notepad-card");
+      const wordDisplay = document.getElementById("word-display");
+      const typeDisplay = document.getElementById("type-display");
+      const meaningDisplay = document.getElementById("meaning-display");
+      const phraseDisplay = document.getElementById("phrase-display");
+      const reverseBtn = document.getElementById("reverse-btn");
+
+      // データを格納する変数
+      let words = [];
+      let currentIndex = 0;
+      // リバース状態を管理するフラグ
+      let isReversed = false;
+
+      // データをFirebaseから取得
+      onChildAdded(dbRef, (data) => {
+        const tango = data.val();
+        const key = data.key;
+
+        // データを配列に追加
+        words.push(tango);
+        console.log("データをFirebaseから取得", tango);
+
+        // 初回表示時にデータを画面に反映
+        if (words.length === 1) {
+          displayWord(0);
+        }
+      });
+
+      // 単語を表示する関数
+      function displayWord(index) {
+        const wordData = words[index];
+        // リバースフラグによって表示内容を切り替え
+        if (isReversed) {
+          wordDisplay.textContent = wordData.meaning || "No meaning";
+          meaningDisplay.textContent = wordData.word || "No word";
+        } else {
+          wordDisplay.textContent = wordData.word || "No word";
+          meaningDisplay.textContent = wordData.meaning || "No meaning";
+        }
+
+        typeDisplay.textContent = wordData.type || "No type";
+        phraseDisplay.textContent = wordData.phrase || "No phrase";
+      }
+
+      // リバースボタンの動作
+      reverseBtn.addEventListener("click", () => {
+        // リバース状態を切り替え
+        isReversed = !isReversed;
+
+        // 現在の単語を再表示
+        displayWord(currentIndex);
+      });
+
+      //前の単語ボタンの動作
+      prevBtn.addEventListener("click", () => {
+        if (words.length === 0) return;
+        currentIndex = (currentIndex - 1 + words.length) % words.length; //前に戻る
+        displayWord(currentIndex);
+      }),
+        // 次の単語ボタンの動作
+        nextBtn.addEventListener("click", () => {
+          if (words.length === 0) return;
+          currentIndex = (currentIndex + 1) % words.length; // 次に進む
+          displayWord(currentIndex); // 単純に単語を切り替える
+        });
+
+      // ページめくりボタンの動作
+      flipBtn.addEventListener("click", () => {
+        // カードを回転
+        card.classList.toggle("flipped");
+      });
+    </script>
+  </body>
+</html>

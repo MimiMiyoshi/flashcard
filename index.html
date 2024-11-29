@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>単語帳</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <div id="background"></div>
+    <div id="content">
+      <h1>単語を登録しましょ！</h1>
+      <div>
+        <label for="word">単語:</label>
+        <input type="text" id="word" placeholder="単語を入力してね" required />
+      </div>
+      <div>
+        <label for="type">品詞:</label>
+        <select name="type" id="type" required>
+          <option value="">選んでね</option>
+          <option value="noun">名詞</option>
+          <option value="verb">動詞</option>
+          <option value="adverb">副詞</option>
+          <option value="adjective">形容詞</option>
+          <option value="preposition">前置詞</option>
+          <option value="idiom">熟語</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div>
+        <label for="meaning">意味:</label>
+        <input
+          type="text"
+          id="meaning"
+          placeholder="単語の意味を入力してね"
+          required
+        />
+      </div>
+      <div>
+        <label for="phrase">例文やメモ:</label>
+        <textarea
+          name="phrase"
+          id="phrase"
+          placeholder="例文やメモを入力してね"
+        ></textarea>
+      </div>
+      <div class="button-container">
+        <button id="send" type="button" class="send">登録する</button>
+        <button
+          id="notepad-btn"
+          class="link"
+          onclick="location.href='notepad.html'"
+        >
+          単語帳を開く
+        </button>
+      </div>
+      <div id="output"></div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        set,
+        onChildAdded,
+        remove,
+        onChildRemoved,
+      } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+      // Your web app's Firebase configuration
+
+
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app); //RealtimeDBに接続
+      const dbRef = ref(db, "vocabulary"); //RealtimeDB内の"vocabulary"を使う
+
+      // 品詞の英語名から日本語名へのマッピング
+      const typeMapping = {
+        noun: "名詞",
+        verb: "動詞",
+        adverb: "副詞",
+        adjective: "形容詞",
+        preposition: "前置詞",
+        idiom: "熟語",
+        other: "その他",
+      };
+      // ページ読み込み後にスクリプトを実行
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("ページが読み込まれました。createDotを開始します。");
+        // ドットを生成して背景に追加する関数
+        function createDot() {
+          const background = document.getElementById("background");
+
+          // 背景レイヤーが見つからない場合はエラーを表示
+          if (!background) {
+            console.error("背景レイヤー (#background) が見つかりません。");
+            return;
+          }
+
+          const dot = document.createElement("div");
+          dot.classList.add("dot");
+
+          // ランダムなサイズと位置
+          const size = Math.random() * 10 + 5; // 5px〜15pxのサイズ
+          dot.style.width = `${size}px`;
+          dot.style.height = `${size}px`;
+          dot.style.left = `${Math.random() * 100}vw`; // 画面幅のランダムな位置
+          dot.style.animationDuration = `${Math.random() * 5 + 5}s`; // 5〜10秒で落下
+
+          // 背景に追加
+          background.appendChild(dot);
+
+          // 一定時間後にドットを削除
+          setTimeout(() => {
+            background.removeChild(dot);
+          }, 10000); // アニメーション終了後に削除
+        }
+
+        // ドットを定期的に生成
+        setInterval(createDot, 500); // 0.5秒ごとにドットを生成
+      });
+
+      //単語を登録する(Click)
+      $("#send").on("click", function () {
+        console.log(phrase);
+        const tango = {
+          word: $("#word").val(),
+          type: $("#type").val(),
+          meaning: $("#meaning").val(),
+          phrase: $("#phrase").val(),
+        };
+
+        const newPostRef = push(dbRef);
+        set(newPostRef, tango);
+
+        //入力欄を空にする
+        $("#word").val("");
+        $("#type").val("");
+        $("#meaning").val("");
+        $("#phrase").val("");
+      });
+
+      //データ登録(Enter)
+      $("#phrase").on("keydown", function (e) {
+        console.log(e); //e変数の中身を確認！！
+        if (e.keyCode == 13) {
+          //EnterKey=13
+          const tango = {
+            word: $("#word").val(),
+            type: $("#type").val(),
+            meaning: $("#meaning").val(),
+            phrase: $("#phrase").val(),
+          };
+          const newPostRef = push(dbRef); //ユニークKEYを生成
+          set(newPostRef, tango); //"chat"にユニークKEYをつけてオブジェクトデータを登録
+        }
+      });
+
+      // 画面読み込み時にヘッダー行を追加
+      $(document).ready(function () {
+        const headerHTML = `
+    <table id="list">
+      <thead>
+        <tr>
+          <th>単語</th>
+          <th>品詞</th>
+          <th>意味</th>
+          <th>例文・その他</th>
+        </tr>
+      </thead>
+      <tbody id="list_body">
+      </tbody>
+    </table>
+  `;
+
+        // ヘッダーを出力エリアに追加
+        $("#output").html(headerHTML);
+      });
+
+      //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+      onChildAdded(dbRef, function (data) {
+        const tango = data.val();
+        // デバッグ: 取得したデータとその型を確認
+        console.log("tango:", tango); // データ全体
+        console.log("tango.phrase:", tango.phrase); // `phrase`フィールドの値
+        console.log("typeof tango.phrase:", typeof tango.phrase); // データ型を確認
+        console.log("tango.phrase === undefined:", tango.phrase === undefined); // undefinedかを確認
+
+        const key = data.key;
+        // `typeMapping` を使って品詞を日本語に変換
+        const japaneseType = typeMapping[tango.type] || tango.type; // マッピングがない場合は英語をそのまま表示
+        let h = `
+            <div id="list_area">
+      <table id="list">
+        <tr>
+          <td>${tango.word}</td>
+          <td>${japaneseType}</td>
+          <td>${tango.meaning}</td>
+          <td>${tango.phrase}</td>
+        </tr>
+      </table>
+    </div>
+            `;
+
+        // jQueryを使って画面に表示しましょう🤗
+        $("#output").append(h);
+        console.log($("#output").html()); // 出力されたHTMLを確認
+      });
+    </script>
+  </body>
+</html>
