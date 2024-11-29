@@ -16,7 +16,7 @@ h1 {
   text-align: center;
   margin: 10px 0;
   font-size: 20px;
-  color: white;;
+  color: white;
 }
 
 /* labelタブ用のスタイル */
@@ -24,6 +24,7 @@ label {
   text-align: center; /* テキストを中央揃え */
   display: block; /* 中央揃えを確実にするためblockに変更 */
   width: 100%; /* 必要に応じて幅を指定 */
+  color: white;
 }
 
 input {
@@ -76,7 +77,6 @@ textarea {
   padding: 10px;
   overflow-x: auto;
   margin-top: 30px;
-  
 }
 
 table {
@@ -87,7 +87,8 @@ table {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 柔らかい影 */
 }
 
-table th, table td {
+table th,
+table td {
   border: 1px solid #ccc;
   padding: 8px;
   text-align: left;
@@ -103,7 +104,7 @@ table th {
   flex-direction: column; /* ボタンを縦に並べる */
   margin-top: 0px;
   justify-content: center;
-  margin: 10px 50px;  
+  margin: 10px 50px;
   gap: 20px; /* ボタン間のスペースを指定 */
 }
 #background {
